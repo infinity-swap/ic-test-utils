@@ -10,15 +10,17 @@
 //! ```
 use std::marker::PhantomData;
 
-use ic_agent::ic_types::Principal;
-use ic_agent::agent::{Agent, UpdateBuilder, QueryBuilder};
-use ic_cdk::export::candid::{CandidType, Encode};
 use crate::Result;
+use ic_agent::agent::{Agent, QueryBuilder, UpdateBuilder};
+use ic_agent::ic_types::Principal;
+use ic_cdk::export::candid::{CandidType, Encode};
+use serde::Deserialize;
 
-mod management;
-mod wallet;
+pub mod management;
+pub mod wallet;
 
 /// Represent a Canister in a test case
+#[derive(Clone, Copy)]
 pub struct Canister<'agent, T> {
     id: Principal,
     pub(crate) agent: &'agent Agent,
@@ -40,8 +42,12 @@ impl<'agent, T> Canister<'agent, T> {
         &self.id
     }
 
-    /// Update 
-    fn update_raw(&self, method_name: impl Into<String>, args: Option<Vec<u8>>) -> Result<UpdateBuilder<'_>> {
+    /// Update
+    fn update_raw(
+        &self,
+        method_name: impl Into<String>,
+        args: Option<Vec<u8>>,
+    ) -> Result<UpdateBuilder<'_>> {
         let mut builder = self.agent.update(&self.id, method_name);
         if let Some(ref args) = args {
             builder.with_arg(args);
@@ -50,7 +56,11 @@ impl<'agent, T> Canister<'agent, T> {
     }
 
     /// Update call to the canister
-    pub fn update<A: CandidType>(&self, method_name: impl Into<String>, args: Option<A>) -> Result<UpdateBuilder<'_>> {
+    pub fn update<A: CandidType>(
+        &self,
+        method_name: impl Into<String>,
+        args: Option<A>,
+    ) -> Result<UpdateBuilder<'_>> {
         let mut builder = self.agent.update(&self.id, method_name);
         if let Some(ref args) = args {
             let args = Encode!(args)?;
@@ -63,4 +73,11 @@ impl<'agent, T> Canister<'agent, T> {
     pub fn query(&self, method_name: impl Into<String>) -> QueryBuilder<'_> {
         self.agent.query(&self.id, method_name)
     }
+}
+
+/// 'Create canister' request result.
+#[derive(CandidType, Deserialize, Debug)]
+pub struct CreateResult {
+    /// An identifier of the created canister.
+    pub canister_id: Principal,
 }

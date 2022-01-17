@@ -11,7 +11,11 @@ pub use errors::{Error, Result};
 
 pub mod canister;
 
-pub use canister::Canister;
+pub use canister::{
+    management::{CanisterInstall, InstallMode, Management},
+    wallet::Wallet,
+    Canister,
+};
 
 const URL: &str = "http://localhost:8000";
 

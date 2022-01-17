@@ -13,11 +13,12 @@
 //! ```
 use std::fs::read_to_string;
 
-use ic_agent::{Agent, agent::UpdateBuilder};
 use ic_agent::ic_types::Principal;
+use ic_agent::{agent::UpdateBuilder, Agent};
 use ic_cdk::export::candid::{CandidType, Decode, Deserialize, Encode};
 
 use super::Canister;
+use super::CreateResult;
 use crate::get_waiter;
 use crate::{Error, Result};
 
@@ -51,11 +52,6 @@ pub struct CallResult {
     pub payload: Vec<u8>,
 }
 
-#[derive(CandidType, Deserialize)]
-pub struct CreateResult {
-    pub canister_id: Principal,
-}
-
 #[derive(Debug, CandidType, Deserialize)]
 struct CallForwardArgs {
     canister: Principal,
@@ -66,6 +62,7 @@ struct CallForwardArgs {
 }
 
 /// Wallet for cycles
+#[derive(Clone, Copy)]
 pub struct Wallet;
 
 impl<'agent> Canister<'agent, Wallet> {
@@ -150,8 +147,6 @@ impl<'agent> Canister<'agent, Wallet> {
     }
 }
 
-
-
 // -----------------------------------------------------------------------------
 //     - TODO -
 //     Do we need even need these types?
@@ -223,4 +218,3 @@ try_from_memory_alloc_decl!(i8);
 try_from_memory_alloc_decl!(i16);
 try_from_memory_alloc_decl!(i32);
 try_from_memory_alloc_decl!(i64);
-
