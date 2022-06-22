@@ -11,7 +11,8 @@
 //! let wallet = Canister::new_wallet(&agent, user, None);
 //! # }
 //! ```
-use std::fs::read_to_string;
+use std::fs::{canonicalize, read_to_string};
+use std::path::PathBuf;
 
 use candid::{CandidType, Decode, Deserialize, Encode};
 use ic_agent::ic_types::Principal;
@@ -27,8 +28,18 @@ fn get_wallet_principal<'a>(
     account_name: impl AsRef<str>,
     wallet_id_path: impl Into<Option<&'a str>>,
 ) -> Result<Principal> {
-    let wallet_id_path = wallet_id_path.into().unwrap_or(WALLET_IDS_PATH);
-    let json_str = read_to_string(wallet_id_path)?;
+    let wallet_id_path = PathBuf::from(wallet_id_path.into().unwrap_or(WALLET_IDS_PATH));
+    let wallet_id_path = canonicalize(&wallet_id_path)?;
+    let json_str = match read_to_string(wallet_id_path.clone()) {
+        Ok(identity) => identity,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            return Err(Error::Generic(format!(
+                "wallet ids not found at path: {:?}",
+                wallet_id_path
+            )));
+        }
+        e @ Err(_) => e?,
+    };
     let json = serde_json::from_str::<serde_json::Value>(&json_str)?;
     let id = json["identities"][account_name.as_ref()]["local"]
         .as_str()
